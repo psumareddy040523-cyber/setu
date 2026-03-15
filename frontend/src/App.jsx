@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import {
   acceptOffer,
+  rejectOffer,
   completeRequest,
   createOffer,
   createRequest,
@@ -47,6 +48,155 @@ const STARTER_FORM = {
   preferred_time: "Today evening",
 };
 
+function LoginScreen_DELETED() {
+  const [tab, setTab] = useState("customer"); // customer | provider | admin
+  const [phone, setPhone] = useState("");
+  const [pin, setPin] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+    setError("");
+    setBusy(true);
+    try {
+      let user;
+      if (tab === "admin") {
+        user = await loginAdmin(pin);
+      } else {
+        user = await loginUser(phone, pin);
+        if (user.role !== tab) {
+          setError(`This account is a ${user.role}, not a ${tab}. Please use the correct tab.`);
+          setBusy(false);
+          return;
+        }
+      }
+      localStorage.setItem("seva_user", JSON.stringify(user));
+      onLogin(user);
+    } catch (err) {
+      const msg = err?.response?.data?.error || "Invalid credentials. Please try again.";
+      setError(msg);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const tabs = [
+    { key: "customer", label: "Customer", icon: UserRound, color: "text-leaf", active: "bg-leaf text-white" },
+    { key: "provider", label: "Provider", icon: Tractor, color: "text-clay", active: "bg-clay text-white" },
+    { key: "admin", label: "Admin", icon: ShieldCheck, color: "text-soil", active: "bg-soil text-white" },
+  ];
+
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-stone-100 to-amber-50 px-4 py-12">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="mb-8 text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.16em] text-clay">Rural Smart Marketplace</p>
+          <h1 className="mt-1 font-display text-4xl">SevaSetu</h1>
+          <p className="mt-2 text-sm text-stone-500">Sign in to your account</p>
+        </div>
+
+        <div className="rounded-3xl border border-stone-200 bg-white/90 p-8 shadow-2xl shadow-stone-900/10 backdrop-blur">
+          {/* Role tabs */}
+          <div className="mb-6 flex rounded-2xl bg-stone-100 p-1.5 gap-1">
+            {tabs.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => { setTab(t.key); setError(""); setPhone(""); setPin(""); }}
+                className={`flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2 text-sm font-semibold transition ${
+                  tab === t.key ? t.active : "text-stone-600 hover:text-stone-900"
+                }`}
+              >
+                <t.icon className="h-4 w-4" />
+                {t.label}
+              </button>
+            ))}
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {tab !== "admin" && (
+              <div>
+                <label className="text-sm font-semibold text-stone-700">Phone Number</label>
+                <div className="relative mt-1">
+                  <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                  <input
+                    className="field pl-9"
+                    type="tel"
+                    placeholder="e.g. 9000000001"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required
+                    maxLength={15}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className="text-sm font-semibold text-stone-700">
+                {tab === "admin" ? "Admin PIN" : "PIN"}
+              </label>
+              <div className="relative mt-1">
+                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400" />
+                <input
+                  className="field pl-9 tracking-[0.3em]"
+                  type="password"
+                  placeholder="••••"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value)}
+                  required
+                  maxLength={6}
+                />
+              </div>
+            </div>
+
+            {error && (
+              <p className="rounded-xl bg-red-50 px-3 py-2 text-sm font-semibold text-red-700">{error}</p>
+            )}
+
+            <button
+              type="submit"
+              disabled={busy}
+              className={`w-full rounded-xl px-4 py-3 font-semibold text-white transition disabled:opacity-60 ${
+                tab === "admin" ? "bg-soil hover:bg-soil/90" : tab === "provider" ? "bg-clay hover:bg-clay/90" : "bg-leaf hover:bg-leaf/90"
+              }`}
+            >
+              {busy ? "Signing in…" : `Sign in as ${tabs.find((t) => t.key === tab)?.label}`}
+            </button>
+          </form>
+        </div>
+
+        {/* Demo credentials */}
+        <div className="mt-6 rounded-2xl border border-stone-200 bg-white/70 p-4 text-xs">
+          <p className="mb-2 font-semibold text-stone-700">🔑 Demo Credentials</p>
+          <table className="w-full border-collapse text-left">
+            <thead>
+              <tr className="text-stone-500">
+                <th className="pb-1 pr-3">Role</th>
+                <th className="pb-1 pr-3">Name</th>
+                <th className="pb-1 pr-3">Phone</th>
+                <th className="pb-1">PIN</th>
+              </tr>
+            </thead>
+            <tbody>
+              {DEMO_CREDS.map((c) => (
+                <tr key={c.phone + c.role} className="border-t border-stone-100">
+                  <td className="py-0.5 pr-3 font-medium text-stone-600">{c.role}</td>
+                  <td className="py-0.5 pr-3 text-stone-700">{c.name}</td>
+                  <td className="py-0.5 pr-3 font-mono text-stone-700">{c.phone}</td>
+                  <td className="py-0.5 font-mono font-bold text-leaf">{c.pin}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   const [dashboard, setDashboard] = useState(null);
   const [users, setUsers] = useState([]);
@@ -58,11 +208,12 @@ function App() {
   const [providerId, setProviderId] = useState("");
   const [providerInbox, setProviderInbox] = useState([]);
   const [selectedInboxRequest, setSelectedInboxRequest] = useState(null);
-  const [offerForm, setOfferForm] = useState({ price: "", availability: "Available", eta_minutes: 30, eta: "30 mins", delivery_time: "", delivery_option: "" });
+  const [offerForm, setOfferForm] = useState({ price: "", availability: "Available", eta_minutes: 30, delivery_option: "Pickup only" });
   const [ratingForm, setRatingForm] = useState({ rating: 5, review: "" });
   const [toast, setToast] = useState("");
   const [loading, setLoading] = useState(false);
   const [sendingOffer, setSendingOffer] = useState(false);
+
 
   const customerUsers = useMemo(() => users.filter((u) => u.role === "customer"), [users]);
   const providerProfiles = useMemo(() => providers, [providers]);
@@ -90,18 +241,11 @@ function App() {
         if (firstCustomer) {
           setForm((prev) => ({ ...prev, user: String(firstCustomer.id) }));
         }
-      } else {
-        setForm((prev) => ({ ...prev, user: "" }));
       }
-      if (allProviders.length > 0) {
+      if (allProviders.length > 0 && !providerId) {
         const firstId = String(allProviders[0].id);
-        setProviderId((prev) => {
-          const activeId = prev || firstId;
-          loadProviderInbox(activeId);
-          return activeId;
-        });
-      } else {
-        setProviderId("");
+        setProviderId(firstId);
+        loadProviderInbox(firstId);
       }
     } catch (error) {
       const msg = error?.response?.data?.detail || error?.message || "Unable to connect to backend API.";
@@ -168,6 +312,16 @@ function App() {
     }
   }
 
+  async function handleRejectOffer(offerId) {
+    try {
+      await rejectOffer(offerId);
+      showToast("Offer rejected.");
+      await loadOffers();
+    } catch {
+      showToast("Offer rejection failed.");
+    }
+  }
+
   async function handleCompleteAndRate() {
     if (!createdRequest?.id) return;
     const acceptedOffer = offers.find((offer) => offer.status === "accepted");
@@ -219,18 +373,19 @@ function App() {
 
     setSendingOffer(true);
     try {
+      const etaMins = Number(offerForm.eta_minutes);
       await createOffer({
         request: selectedInboxRequest.id,
         provider: Number(providerId),
         price: Number(offerForm.price),
         availability: offerForm.availability,
-        eta: offerForm.eta,
-        eta_minutes: Number(offerForm.eta_minutes),
-        delivery_time: offerForm.delivery_time,
+        eta: `${etaMins} mins`,
+        eta_minutes: etaMins,
+        delivery_time: `${offerForm.delivery_option} ${etaMins} mins`,
         delivery_option: offerForm.delivery_option,
       });
       showToast("Offer sent! Switching to Customer view so they can see and accept it.");
-      setOfferForm({ price: "", availability: "Available", eta_minutes: 30, eta: "30 mins", delivery_time: "", delivery_option: "" });
+      setOfferForm({ price: "", availability: "Available", eta_minutes: 30, delivery_option: "Pickup only" });
       setSelectedInboxRequest(null);
       await loadProviderInbox(providerId);
       await boot();
@@ -430,13 +585,20 @@ function App() {
                 </div>
               </div>
               <p className="mt-2 text-sm text-stone-700">{offer.availability}</p>
-              <div className="mt-3">
+              <div className="mt-3 flex gap-2">
                 <button
                   onClick={() => handleAcceptOffer(offer.id)}
                   disabled={offer.status !== "pending"}
                   className="rounded-lg bg-clay px-3 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:bg-stone-300"
                 >
                   Accept Offer
+                </button>
+                <button
+                  onClick={() => handleRejectOffer(offer.id)}
+                  disabled={offer.status !== "pending"}
+                  className="rounded-lg border border-red-300 px-3 py-2 text-sm font-semibold text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Reject
                 </button>
               </div>
             </div>
@@ -569,39 +731,26 @@ function App() {
               />
             </div>
             <div>
-              <label className="text-sm font-semibold">ETA Text</label>
-              <input
-                className="field mt-1"
-                value={offerForm.eta}
-                onChange={(e) => setOfferForm({ ...offerForm, eta: e.target.value })}
-                placeholder="30 mins"
-              />
-            </div>
-            <div>
               <label className="text-sm font-semibold">Availability</label>
-              <input
+              <select
                 className="field mt-1"
                 value={offerForm.availability}
                 onChange={(e) => setOfferForm({ ...offerForm, availability: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-semibold">Delivery Time</label>
-              <input
-                className="field mt-1"
-                value={offerForm.delivery_time}
-                onChange={(e) => setOfferForm({ ...offerForm, delivery_time: e.target.value })}
-                placeholder="Delivery 30 mins"
-              />
+              >
+                <option value="Available">Available</option>
+                <option value="Not Available">Not Available</option>
+              </select>
             </div>
             <div>
               <label className="text-sm font-semibold">Delivery Option</label>
-              <input
+              <select
                 className="field mt-1"
                 value={offerForm.delivery_option}
                 onChange={(e) => setOfferForm({ ...offerForm, delivery_option: e.target.value })}
-                placeholder="Pickup only / Delivery"
-              />
+              >
+                <option value="Pickup only">Pickup only</option>
+                <option value="Delivery">Delivery</option>
+              </select>
             </div>
           </div>
 
@@ -617,6 +766,7 @@ function App() {
     );
   }
 
+
   return (
     <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
       <header className="mb-8 rounded-3xl border border-stone-200 bg-white/80 p-6 shadow-xl shadow-stone-900/5 backdrop-blur animate-rise">
@@ -629,6 +779,7 @@ function App() {
               agro stores, and local service providers in under 10 km.
             </p>
           </div>
+
           <div className="flex items-center gap-2 rounded-2xl bg-stone-100 p-2">
             <button
               onClick={() => setCustomerMode(true)}

@@ -47,6 +47,11 @@ export async function acceptOffer(offerId) {
   return data;
 }
 
+export async function rejectOffer(offerId) {
+  const { data } = await api.post(`/offers/${offerId}/reject/`);
+  return data;
+}
+
 export async function completeRequest(requestId) {
   const { data } = await api.post(`/requests/${requestId}/complete/`);
   return data;
