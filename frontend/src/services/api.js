@@ -61,3 +61,8 @@ export async function submitRating(payload) {
   const { data } = await api.post("/ratings/", payload);
   return data;
 }
+
+export async function createRating(payload) {
+  const { data } = await api.post("/ratings/", payload);
+  return data;
+}

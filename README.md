@@ -57,7 +57,7 @@ Backend URL: `http://localhost:8000/api`
 - Use `python manage.py clear_data` to remove all users, providers, requests, offers, and ratings. Run `seed_demo` again to repopulate.
 
 ## Frontend Setup
-
+cd 
 1. Open terminal in `frontend`
 2. Create `.env` from `.env.example`
 3. Install dependencies:
@@ -110,3 +110,4 @@ Frontend URL: `http://localhost:5173`
 - Matching filters providers by category + service type
 - Matching enforces max distance (10 km default)
 - Workflow is transparent and comparison-first (not first-come-first-serve)
+cd backend/sevasetu && ./venv/bin/python manage.py runserver

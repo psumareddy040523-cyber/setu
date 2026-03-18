@@ -13,6 +13,7 @@ class Command(BaseCommand):
             {
                 "name": "Ravi Farmer",
                 "phone": "9000000001",
+                "pin": "123456",
                 "role": AppUser.ROLE_CUSTOMER,
                 "location": "Chilakaluripet",
                 "latitude": 16.0898,
@@ -21,6 +22,7 @@ class Command(BaseCommand):
             {
                 "name": "Lakshmi Village",
                 "phone": "9000000002",
+                "pin": "123456",
                 "role": AppUser.ROLE_CUSTOMER,
                 "location": "Chilakaluripet",
                 "latitude": 16.092,
@@ -29,6 +31,7 @@ class Command(BaseCommand):
             {
                 "name": "Suresh Electric Works",
                 "phone": "9000000003",
+                "pin": "123456",
                 "role": AppUser.ROLE_PROVIDER,
                 "location": "Chilakaluripet",
                 "latitude": 16.097,
@@ -38,6 +41,7 @@ class Command(BaseCommand):
             {
                 "name": "Mohan Repair Center",
                 "phone": "9000000004",
+                "pin": "123456",
                 "role": AppUser.ROLE_PROVIDER,
                 "location": "Chilakaluripet",
                 "latitude": 16.074,
@@ -47,6 +51,7 @@ class Command(BaseCommand):
             {
                 "name": "Sai Pharmacy",
                 "phone": "9000000005",
+                "pin": "123456",
                 "role": AppUser.ROLE_PROVIDER,
                 "location": "Chilakaluripet",
                 "latitude": 16.091,
@@ -56,6 +61,7 @@ class Command(BaseCommand):
             {
                 "name": "Green Agro Store",
                 "phone": "9000000006",
+                "pin": "123456",
                 "role": AppUser.ROLE_PROVIDER,
                 "location": "Chilakaluripet",
                 "latitude": 16.084,
@@ -114,6 +120,8 @@ class Command(BaseCommand):
             user = provider_data["user"]
             defaults = provider_data.copy()
             defaults.pop("user")
-            ProviderProfile.objects.update_or_create(user=user, service_type=defaults["service_type"], defaults=defaults)
+            ProviderProfile.objects.update_or_create(
+                user=user, service_type=defaults["service_type"], defaults=defaults
+            )
 
         self.stdout.write(self.style.SUCCESS("Demo data seeded successfully."))

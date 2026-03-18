@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ShieldCheck, LogOut, Users, Wrench, FileText, CheckCircle, XCircle, TrendingUp, Activity } from "lucide-react";
+import { ShieldCheck, LogOut, Users, Wrench, FileText, CheckCircle, X, TrendingUp, Activity, Plus } from "lucide-react";
 import { fetchDashboard, fetchUsers, fetchProviders } from "../services/api";
 
 export default function AdminDashboard() {
@@ -11,6 +11,18 @@ export default function AdminDashboard() {
   const [providers, setProviders] = useState([]);
   const [dashboard, setDashboard] = useState(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createType, setCreateType] = useState("provider");
+  const [busy, setBusy] = useState(false);
+  const [toast, setToast] = useState("");
+  
+  const [createForm, setCreateForm] = useState({
+    name: "",
+    phone: "",
+    location: "",
+    pin: "123456",
+    service_type: "electrician",
+  });
 
   useEffect(() => {
     const savedUser = JSON.parse(localStorage.getItem("seva_user") || "{}");
@@ -29,11 +41,147 @@ export default function AdminDashboard() {
 
   function handleLogout() { localStorage.removeItem("seva_user"); localStorage.removeItem("seva_token"); navigate("/login/admin"); }
 
+  async function handleCreate(e) {
+    e.preventDefault();
+    setBusy(true);
+    setToast("");
+    try {
+      const payload = {
+        name: createForm.name,
+        phone: createForm.phone,
+        pin: createForm.pin,
+        role: createType,
+        location: createForm.location
+      };
+      
+      if (createType === "provider") {
+        payload.service_type = createForm.service_type;
+      }
+      
+      const response = await fetch("http://localhost:8000/api/auth/register/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) throw new Error(data.error || "Failed to create");
+      
+      setToast(`${createType === "provider" ? "Provider" : "Customer"} created successfully!`);
+      setShowCreateModal(false);
+      setCreateForm({ name: "", phone: "", location: "", pin: "123456", service_type: "electrician" });
+      loadData();
+    } catch (err) {
+      setToast(err.message);
+    } finally {
+      setBusy(false);
+      setTimeout(() => setToast(""), 3000);
+    }
+  }
+
+  const openCreateModal = (type) => {
+    setCreateType(type);
+    setCreateForm({ name: "", phone: "", location: "", pin: "123456", service_type: "electrician" });
+    setShowCreateModal(true);
+  };
+
   const customers = users.filter(u => u.role === "customer");
-  const serviceProviders = users.filter(u => u.role === "provider");
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-stone-50 to-soil/5">
+      {toast && (
+        <div className="fixed left-1/2 top-4 -translate-x-1/2 z-50 rounded-xl bg-soil px-6 py-3 text-sm font-semibold text-white shadow-lg">
+          {toast}
+        </div>
+      )}
+      
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+            <div className="flex justify-between items-center px-6 py-4 border-b">
+              <h3 className="font-bold text-lg">Create New {createType === "provider" ? "Provider" : "Customer"}</h3>
+              <button onClick={() => setShowCreateModal(false)} className="p-1 hover:bg-stone-100 rounded">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <form onSubmit={handleCreate} className="p-6 space-y-4">
+              <div>
+                <label className="text-sm font-semibold text-stone-700">
+                  {createType === "provider" ? "Business Name" : "Full Name"}
+                </label>
+                <input 
+                  className="w-full rounded-xl border-2 border-stone-200 px-4 py-2 focus:border-soil focus:outline-none" 
+                  placeholder={createType === "provider" ? "Suresh Electric Works" : "John Doe"}
+                  value={createForm.name}
+                  onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-stone-700">Phone Number</label>
+                <input 
+                  className="w-full rounded-xl border-2 border-stone-200 px-4 py-2 focus:border-soil focus:outline-none" 
+                  placeholder={createType === "provider" ? "9100000001" : "9000000001"}
+                  value={createForm.phone}
+                  onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+                  required
+                />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-stone-700">Location</label>
+                <input 
+                  className="w-full rounded-xl border-2 border-stone-200 px-4 py-2 focus:border-soil focus:outline-none" 
+                  placeholder="Chilakaluripet"
+                  value={createForm.location}
+                  onChange={(e) => setCreateForm({ ...createForm, location: e.target.value })}
+                  required
+                />
+              </div>
+              {createType === "provider" && (
+                <div>
+                  <label className="text-sm font-semibold text-stone-700">Service Type</label>
+                  <select 
+                    className="w-full rounded-xl border-2 border-stone-200 px-4 py-2 focus:border-soil focus:outline-none"
+                    value={createForm.service_type}
+                    onChange={(e) => setCreateForm({ ...createForm, service_type: e.target.value })}
+                  >
+                    <option value="electrician">Electrician</option>
+                    <option value="plumber">Plumber</option>
+                    <option value="mechanic">Mechanic</option>
+                    <option value="tractor_rental">Tractor Rental</option>
+                    <option value="pump_repair">Pump Repair</option>
+                    <option value="medicines">Pharmacy</option>
+                    <option value="fertilizers">Fertilizers</option>
+                    <option value="seeds">Seeds</option>
+                    <option value="pesticides">Pesticides</option>
+                    <option value="tools">Tools</option>
+                  </select>
+                </div>
+              )}
+              <div>
+                <label className="text-sm font-semibold text-stone-700">PIN</label>
+                <input 
+                  className="w-full rounded-xl border-2 border-stone-200 px-4 py-2 focus:border-soil focus:outline-none" 
+                  placeholder="123456"
+                  value={createForm.pin}
+                  onChange={(e) => setCreateForm({ ...createForm, pin: e.target.value })}
+                  required
+                  maxLength={6}
+                />
+              </div>
+              <button 
+                type="submit" 
+                disabled={busy}
+                className="w-full rounded-xl bg-soil px-4 py-3 font-semibold text-white hover:bg-soil/90 disabled:opacity-60"
+              >
+                {busy ? "Creating..." : `Create ${createType === "provider" ? "Provider" : "Customer"}`}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+      
       <nav className="bg-white shadow-sm border-b border-stone-100">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4">
           <div className="flex items-center gap-3">
@@ -77,6 +225,21 @@ export default function AdminDashboard() {
                   <FileText className="w-5 h-5" /> Requests
                 </button>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <button 
+                onClick={() => openCreateModal("provider")}
+                className="w-full rounded-2xl bg-soil px-4 py-3 font-semibold text-white hover:bg-soil/90 flex items-center justify-center gap-2"
+              >
+                <Plus className="w-5 h-5" /> Add Provider
+              </button>
+              <button 
+                onClick={() => openCreateModal("customer")}
+                className="w-full rounded-2xl bg-stone-600 px-4 py-3 font-semibold text-white hover:bg-stone-700 flex items-center justify-center gap-2"
+              >
+                <Plus className="w-5 h-5" /> Add Customer
+              </button>
             </div>
 
             <div className="bg-gradient-to-br from-soil to-soil/80 rounded-2xl p-6 text-white">
@@ -127,10 +290,11 @@ export default function AdminDashboard() {
 
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-                    <div className="bg-gradient-to-r from-leaf to-leaf/80 px-6 py-4">
+                    <div className="bg-gradient-to-r from-leaf to-leaf/80 px-6 py-4 flex justify-between items-center">
                       <h2 className="font-display text-lg text-white flex items-center gap-2">
                         <Users className="w-5 h-5" /> {t("allCustomers")} ({customers.length})
                       </h2>
+                      <button onClick={() => openCreateModal("customer")} className="bg-white/20 px-3 py-1 rounded-lg text-white text-xs hover:bg-white/30">+ Add</button>
                     </div>
                     <div className="p-4 space-y-2 max-h-80 overflow-y-auto">
                       {customers.slice(0, 10).map((u) => (
@@ -146,10 +310,11 @@ export default function AdminDashboard() {
                   </div>
 
                   <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-                    <div className="bg-gradient-to-r from-clay to-clay/80 px-6 py-4">
+                    <div className="bg-gradient-to-r from-clay to-clay/80 px-6 py-4 flex justify-between items-center">
                       <h2 className="font-display text-lg text-white flex items-center gap-2">
                         <Wrench className="w-5 h-5" /> {t("allProviders")} ({providers.length})
                       </h2>
+                      <button onClick={() => openCreateModal("provider")} className="bg-white/20 px-3 py-1 rounded-lg text-white text-xs hover:bg-white/30">+ Add</button>
                     </div>
                     <div className="p-4 space-y-2 max-h-80 overflow-y-auto">
                       {providers.slice(0, 10).map((p) => (
@@ -171,8 +336,11 @@ export default function AdminDashboard() {
 
             {activeTab === "customers" && (
               <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-                <div className="bg-gradient-to-r from-leaf to-leaf/80 px-6 py-4">
+                <div className="bg-gradient-to-r from-leaf to-leaf/80 px-6 py-4 flex justify-between items-center">
                   <h2 className="font-display text-xl text-white">{t("allCustomers")} ({customers.length})</h2>
+                  <button onClick={() => openCreateModal("customer")} className="bg-white/20 px-4 py-2 rounded-lg text-white text-sm font-medium hover:bg-white/30 flex items-center gap-2">
+                    <Plus className="w-4 h-4" /> Add Customer
+                  </button>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">
@@ -203,8 +371,11 @@ export default function AdminDashboard() {
 
             {activeTab === "providers" && (
               <div className="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-                <div className="bg-gradient-to-r from-clay to-clay/80 px-6 py-4">
+                <div className="bg-gradient-to-r from-clay to-clay/80 px-6 py-4 flex justify-between items-center">
                   <h2 className="font-display text-xl text-white">{t("allProviders")} ({providers.length})</h2>
+                  <button onClick={() => openCreateModal("provider")} className="bg-white/20 px-4 py-2 rounded-lg text-white text-sm font-medium hover:bg-white/30 flex items-center gap-2">
+                    <Plus className="w-4 h-4" /> Add Provider
+                  </button>
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full">

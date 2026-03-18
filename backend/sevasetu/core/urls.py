@@ -3,7 +3,11 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     AppUserViewSet,
+    AuthLoginAPIView,
+    AuthRegisterAPIView,
     MarketplaceDashboardAPIView,
+    MyOffersAPIView,
+    MyRequestsAPIView,
     OfferViewSet,
     ProviderInboxAPIView,
     ProviderProfileViewSet,
@@ -22,4 +26,8 @@ urlpatterns = [
     path("", include(router.urls)),
     path("dashboard/", MarketplaceDashboardAPIView.as_view(), name="dashboard"),
     path("provider-inbox/", ProviderInboxAPIView.as_view(), name="provider-inbox"),
+    path("my-requests/", MyRequestsAPIView.as_view(), name="my-requests"),
+    path("my-offers/", MyOffersAPIView.as_view(), name="my-offers"),
+    path("auth/login/", AuthLoginAPIView.as_view(), name="auth-login"),
+    path("auth/register/", AuthRegisterAPIView.as_view(), name="auth-register"),
 ]
