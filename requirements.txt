@@ -1,2 +1,2 @@
-streamlit
-requests
+# No Python dependencies required for React frontend
+# Backend dependencies are in backend/sevasetu/requirements.txt
