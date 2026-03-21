@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Leaf, Wrench, ShieldCheck, ArrowRight, UserPlus, Phone, Lock, MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { login, register } from "../services/api";
 
 const roleConfig = {
   customer: {
@@ -62,23 +63,13 @@ export default function LoginPage({ role = "customer" }) {
     setBusy(true);
     setError("");
     try {
-      const formData = new FormData();
-      formData.append("phone", loginForm.phone);
-      formData.append("pin", loginForm.pin);
-      
-      const response = await fetch("http://localhost:8000/api/auth/login/", {
-        method: "POST",
-        body: formData,
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) throw new Error(data.error || "Login failed");
+      const data = await login(loginForm.phone, loginForm.pin);
+
       if (role !== "admin" && data.user.role !== role) throw new Error(`Please use ${data.user.role} login page`);
-      
+
       localStorage.setItem("seva_user", JSON.stringify(data.user));
       localStorage.setItem("seva_token", data.token);
-      
+
       if (role === "customer") navigate("/customer/dashboard");
       else if (role === "provider") navigate("/provider/dashboard");
       else navigate("/admin/dashboard");
@@ -101,21 +92,13 @@ export default function LoginPage({ role = "customer" }) {
         role: role,
         location: registerForm.location
       };
-      
+
       if (role === "provider") {
         payload.service_type = registerForm.serviceType;
       }
-      
-      const response = await fetch("http://localhost:8000/api/auth/register/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) throw new Error(data.error || "Registration failed");
-      
+
+      const data = await register(payload);
+
       setToast("Registration successful! Please login with your credentials.");
       setIsRegister(false);
       setRegisterForm({ name: "", phone: "", location: "", pin: "", serviceType: "electrician" });

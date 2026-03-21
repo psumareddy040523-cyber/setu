@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ShieldCheck, LogOut, Users, Wrench, FileText, CheckCircle, X, TrendingUp, Activity, Plus } from "lucide-react";
-import { fetchDashboard, fetchUsers, fetchProviders } from "../services/api";
+import { fetchDashboard, fetchUsers, fetchProviders, register } from "../services/api";
 
 export default function AdminDashboard() {
   const { t, i18n } = useTranslation();
@@ -53,21 +53,13 @@ export default function AdminDashboard() {
         role: createType,
         location: createForm.location
       };
-      
+
       if (createType === "provider") {
         payload.service_type = createForm.service_type;
       }
-      
-      const response = await fetch("http://localhost:8000/api/auth/register/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) throw new Error(data.error || "Failed to create");
-      
+
+      const data = await register(payload);
+
       setToast(`${createType === "provider" ? "Provider" : "Customer"} created successfully!`);
       setShowCreateModal(false);
       setCreateForm({ name: "", phone: "", location: "", pin: "123456", service_type: "electrician" });

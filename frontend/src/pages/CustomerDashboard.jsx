@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Leaf, Pill, Tractor, Wrench, LogOut, Plus, MapPin, Clock, CheckCircle, XCircle, Star, History, Search, User, UserCircle } from "lucide-react";
-import { acceptOffer, rejectOffer, completeRequest, createRequest, createRating, fetchProviders, fetchUsers } from "../services/api";
+import { acceptOffer, rejectOffer, completeRequest, createRequest, createRating, fetchProviders, fetchUsers, fetchMyRequests } from "../services/api";
 
 const MODULES = [
   { key: "service", label: "Local Services", icon: Wrench, color: "bg-clay/15 text-clay" },
@@ -70,8 +70,7 @@ export default function CustomerDashboard() {
 
   async function loadMyRequests(userId) {
     try {
-      const res = await fetch(`http://localhost:8000/api/my-requests/?user_id=${userId}&user_role=customer`);
-      const data = await res.json();
+      const data = await fetchMyRequests(userId, "customer");
       setMyRequests(data.filter(r => r.status !== "completed"));
       setCompletedRequests(data.filter(r => r.status === "completed"));
     } catch { }
@@ -97,8 +96,7 @@ export default function CustomerDashboard() {
 
   async function loadOffers(requestId) {
     try {
-      const res = await fetch(`http://localhost:8000/api/request/${requestId}/offers/`);
-      const data = await res.json();
+      const data = await fetchRequestOffers(requestId);
       setOffers(data);
     } catch { }
   }

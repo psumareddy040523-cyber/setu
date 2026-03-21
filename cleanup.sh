@@ -19,8 +19,14 @@ rm -f backend/sevasetu/*.log
 # Root cleanup
 rm -rf .venv/
 rm -rf venv/
+rm -rf dist/
 
 echo "✅ Cleanup complete!"
 echo ""
-echo "Files ready to push:"
+echo "📋 Files ready to push:"
 git status --short
+echo ""
+echo "💡 Next steps:"
+echo "   git add ."
+echo "   git commit -m \"Ready for deployment\""
+echo "   git push origin main"
